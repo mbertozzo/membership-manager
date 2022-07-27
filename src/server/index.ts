@@ -3,6 +3,7 @@
  */
 
 import express from 'express';
+import mongoose from 'mongoose';
 import { ApolloServer } from 'apollo-server-express';
 import {
   ApolloServerPluginLandingPageDisabled,
@@ -12,6 +13,11 @@ import {
 import * as dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+
+import logger from 'pino';
+const log = logger();
+
+import apolloLoggerPlugin from './utils/apolloLoggerPlugin';
 
 import typeDefs from './gql/schema';
 import resolvers from './gql/resolvers';
@@ -57,6 +63,18 @@ app.use(express.json());
 app.use(express.static('public'));
 
 /**
+ * DB connection
+ */
+async function startDbConnection() {
+  await mongoose
+    .connect(process.env.MONGODB_URI || '', {
+      autoIndex: true,
+      keepAlive: true,
+    })
+    .then(_ => log.info(`Successfully connected to ${process.env.MONGODB_URI}`));
+}
+
+/**
  * Apollo Server configuration
  */
 async function startApolloServer(typeDefs, resolvers) {
@@ -66,22 +84,31 @@ async function startApolloServer(typeDefs, resolvers) {
     csrfPrevention: true,
     cache: 'bounded',
     plugins: [
+      apolloLoggerPlugin,
       process.env.NODE_ENV === 'production'
         ? ApolloServerPluginLandingPageDisabled()
         : ApolloServerPluginLandingPageGraphQLPlayground(),
     ],
   });
-  await server.start();
+  await server.start().then(_ => log.info(`Successfully started Apollo Server on path ${server.graphqlPath}`));
+
   server.applyMiddleware({ app });
 }
-
-startApolloServer(typeDefs, resolvers);
 
 /**
  * Server Activation
  */
+async function startServer() {
+  await startDbConnection();
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`\n\n🚀 Server is running at http://localhost:${PORT}\n`);
+  await startApolloServer(typeDefs, resolvers);
+
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    log.info(`🚀 Server is running at http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch(err => {
+  log.error(`An error occurred: ${err}`);
 });
