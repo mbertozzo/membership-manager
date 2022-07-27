@@ -5,6 +5,9 @@
   "main": "index.js",
   "author": "Matteo Bertozzo",
   "license": "MIT",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "build": "npx tsc --rootDir src/server --outDir dist/server",
     "dev": "ts-node-dev --respawn --pretty --transpile-only src/server/index.ts",

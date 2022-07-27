@@ -34,8 +34,6 @@ const app = express();
  *  App Configuration
  */
 
-// process.env.NODE_ENV === 'production' ? undefined : false })
-
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -54,7 +52,9 @@ app.use(
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-app.use(express.static('dist/client'));
+// Temp to make server work while FE is not yet available
+// app.use(express.static('dist/client'));
+app.use(express.static('public'));
 
 /**
  * Apollo Server configuration
