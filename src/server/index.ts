@@ -19,6 +19,8 @@ const log = logger();
 
 import apolloLoggerPlugin from './utils/apolloLoggerPlugin';
 
+import seed from './utils/seedDb';
+
 import typeDefs from './gql/schema';
 import resolvers from './gql/resolvers';
 
@@ -72,6 +74,8 @@ async function startDbConnection() {
       keepAlive: true,
     })
     .then(_ => log.info(`Successfully connected to ${process.env.MONGODB_URI}`));
+
+  await seed().then(_ => log.info(`Successfully created admin user`));
 }
 
 /**
