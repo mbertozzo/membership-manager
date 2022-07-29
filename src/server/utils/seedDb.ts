@@ -10,9 +10,8 @@ async function seed(db) {
   if (!user) {
     await db.user
       .create({
-        username: process.env.ADMIN_USER,
-        password: process.env.ADMIN_PASS,
         email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASS,
       })
       .catch(err => log.error(`Error creating admin account: ${err}`));
   }
