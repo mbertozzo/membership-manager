@@ -3,8 +3,6 @@ const log = logger();
 
 import { AuthenticationError, ApolloError } from 'apollo-server-core';
 
-import User from '../models/user';
-
 import { generateToken } from '../utils/jwt';
 
 const resolvers = {
@@ -15,8 +13,8 @@ const resolvers = {
   },
 
   Mutation: {
-    login: async (_, { email, password }, { res }, info) => {
-      const user = await User.findOne({ email });
+    login: async (_, { email, password }, { db, res }, info) => {
+      const user = await db.user.findOne({ where: { email: email } });
 
       if (!user) {
         log.info(`${email} tried to login, but no match were found in DB`);
@@ -26,6 +24,7 @@ const resolvers = {
       const isValid = await user.validatePassword(password);
 
       if (isValid) {
+        log.debug('Sent token');
         const token = generateToken({ id: user.id.toString() });
 
         res.cookie('jwt', token, {

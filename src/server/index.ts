@@ -83,7 +83,7 @@ async function startApolloServer(typeDefs, resolvers) {
     resolvers,
     csrfPrevention: true,
     cache: 'bounded',
-    context: ({ req, res }) => ({ req, res }),
+    context: ({ req, res }) => ({ db, req, res }),
     formatError: ({ message, locations, path, extensions }) => ({ message, code: extensions.code }),
     plugins: [
       apolloLoggerPlugin,

@@ -1,3 +1,5 @@
+import bcrypt from 'bcrypt';
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
     'user',
@@ -23,6 +25,15 @@ module.exports = (sequelize, DataTypes) => {
       freezeTableName: true,
     },
   );
+
+  User.addHook('beforeCreate', async (user, options) => {
+    const salt = await bcrypt.genSalt(parseFloat(process.env.SALT_ROUNDS));
+    user.password = await bcrypt.hash(user.password, salt);
+  });
+
+  User.prototype.validatePassword = async function (password) {
+    return await bcrypt.compare(password, this.password);
+  };
 
   return User;
 };
