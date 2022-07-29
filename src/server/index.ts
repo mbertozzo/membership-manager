@@ -3,7 +3,6 @@
  */
 
 import express from 'express';
-import mongoose from 'mongoose';
 import { ApolloServer } from 'apollo-server-express';
 import {
   ApolloServerPluginLandingPageDisabled,
@@ -19,6 +18,7 @@ const log = logger();
 
 import apolloLoggerPlugin from './utils/apolloLoggerPlugin';
 
+import db from './models';
 import seed from './utils/seedDb';
 
 import typeDefs from './gql/schema';
@@ -68,14 +68,10 @@ app.use(express.static('public'));
  * DB connection
  */
 async function startDbConnection() {
-  await mongoose
-    .connect(process.env.MONGODB_URI || '', {
-      autoIndex: true,
-      keepAlive: true,
-    })
-    .then(_ => log.info(`Successfully connected to ${process.env.MONGODB_URI}`));
+  await db.sequelize.authenticate().then(_ => log.info(`Successfully connected to database`));
+  await db.sequelize.sync({ force: true }).then(_ => log.info(`Successfully synced tables`));
 
-  await seed().then(_ => log.info(`Successfully created admin user`));
+  await seed(db).then(_ => log.info(`Successfully created admin user`));
 }
 
 /**
