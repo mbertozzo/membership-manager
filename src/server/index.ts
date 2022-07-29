@@ -88,6 +88,7 @@ async function startApolloServer(typeDefs, resolvers) {
     csrfPrevention: true,
     cache: 'bounded',
     context: ({ req, res }) => ({ req, res }),
+    formatError: ({ message, locations, path, extensions }) => ({ message, code: extensions.code }),
     plugins: [
       apolloLoggerPlugin,
       process.env.NODE_ENV === 'production'
