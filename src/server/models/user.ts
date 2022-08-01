@@ -9,8 +9,8 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      firstName: DataTypes.STRING,
-      lastName: DataTypes.STRING,
+      firstname: DataTypes.STRING,
+      lastname: DataTypes.STRING,
       email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -19,6 +19,12 @@ module.exports = (sequelize, DataTypes) => {
       password: {
         type: DataTypes.STRING,
         allowNull: false,
+      },
+      verificationToken: {
+        type: DataTypes.STRING,
+      },
+      verifiedOn: {
+        type: DataTypes.DATE,
       },
     },
     {
