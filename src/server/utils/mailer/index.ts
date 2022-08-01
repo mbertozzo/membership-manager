@@ -1,3 +1,4 @@
+import sendVerificationMail from './sendVerificationMail';
 import sendAlreadyRegisteredEmail from './sendAlreadyRegisteredEmail';
 
-export { sendAlreadyRegisteredEmail };
+export { sendVerificationMail, sendAlreadyRegisteredEmail };
