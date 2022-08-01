@@ -1,9 +1,10 @@
 import logger from 'pino';
 const log = logger();
 
-import { AuthenticationError, ApolloError } from 'apollo-server-core';
+import { AuthenticationError, ApolloError, UserInputError } from 'apollo-server-core';
 
 import { generateToken } from '../utils/jwt';
+import { sendAlreadyRegisteredEmail } from '../utils/mailer';
 
 const resolvers = {
   Query: {
@@ -13,6 +14,13 @@ const resolvers = {
   },
 
   Mutation: {
+    register: async (_, { firstname, lastname, email, password }, { db }, info) => {
+      if (await db.user.findOne({ where: { email: email } })) {
+        log.info(`Trying to register user ${email}, entry already existing in DB`);
+        await sendAlreadyRegisteredEmail(email);
+        throw new UserInputError(`Error while performing registration`);
+      }
+    },
     login: async (_, { email, password }, { db, res }, info) => {
       const user = await db.user.findOne({ where: { email: email } });
 
