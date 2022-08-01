@@ -12,6 +12,7 @@ async function seed(db) {
       .create({
         email: process.env.ADMIN_EMAIL,
         password: process.env.ADMIN_PASS,
+        verifiedOn: Date.now(),
       })
       .catch(err => log.error(`Error creating admin account: ${err}`));
   }

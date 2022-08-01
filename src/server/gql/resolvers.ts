@@ -1,7 +1,7 @@
 import logger from 'pino';
 const log = logger();
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 import { AuthenticationError, ApolloError, UserInputError } from 'apollo-server-core';
 
@@ -67,6 +67,11 @@ const resolvers = {
       if (!user) {
         log.info(`${email} tried to login, but no match were found in DB`);
         throw new AuthenticationError('Invalid credentials');
+      }
+
+      if (!user.verifiedOn) {
+        log.info(`${email} tried to login, but account isn't verified yet`);
+        throw new AuthenticationError('Account not verified');
       }
 
       const isValid = await user.validatePassword(password);
