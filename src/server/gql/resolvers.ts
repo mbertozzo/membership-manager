@@ -5,8 +5,10 @@ import crypto from 'crypto';
 
 import { AuthenticationError, ApolloError, UserInputError } from 'apollo-server-core';
 
+import { Op } from 'sequelize';
+
 import { generateToken } from '../utils/jwt';
-import { sendVerificationMail, sendAlreadyRegisteredEmail } from '../utils/mailer';
+import { sendVerificationMail, sendAlreadyRegisteredEmail, sendForgotPasswordMail } from '../utils/mailer';
 
 const resolvers = {
   Query: {
@@ -56,13 +58,14 @@ const resolvers = {
 
       await user.update({
         verifiedOn: Date.now(),
+        verificationToken: null,
       });
 
       log.info(`Account ${user.email} successfully verified`);
       return 'Account successfully verified';
     },
     login: async (_, { email, password }, { db, res }, info) => {
-      const user = await db.user.findOne({ where: { email: email } });
+      const user = await db.user.findOne({ where: { email } });
 
       if (!user) {
         log.info(`${email} tried to login, but no match were found in DB`);
@@ -90,6 +93,47 @@ const resolvers = {
         log.info(`${email} tried to login, but password hashes didn't match`);
         throw new AuthenticationError('Invalid credentials');
       }
+    },
+    forgotPassword: async (_, { email }, { db, res }, info) => {
+      const msg =
+        "If the email provided matches an existing account, you'll receive a message with a link to reset your password.";
+      const user = await db.user.findOne({ where: { email } });
+
+      if (!user) {
+        log.info(`${email} asked for a password reset, but no account was found`);
+        return msg;
+      }
+
+      const resetToken = crypto.randomBytes(40).toString('hex');
+      const twoHours = 2 * 60 * 60 * 1000;
+
+      await user.update({
+        resetToken,
+        resetExpiration: new Date(Date.now() + twoHours),
+      });
+
+      log.info(`Correctly set token for password reset for account ${email}`);
+      await sendForgotPasswordMail(user);
+      return msg;
+    },
+    changePassword: async (_, { token, password }, { db, res }, info) => {
+      const user = await db.user.findOne({
+        where: { resetToken: token, resetExpiration: { [Op.gte]: Date.now() } },
+      });
+
+      if (!user) {
+        log.info('Error while changing password, no account matching with parameters');
+        throw new UserInputError('Error: token expired or incorrect parameters');
+      }
+
+      await user.update({
+        password,
+        resetToken: null,
+        resetExpiration: null,
+      });
+
+      log.info(`Successfully changed password for user ${user.email}`);
+      return 'Successfully changed password';
     },
   },
 };

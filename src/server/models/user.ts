@@ -26,16 +26,27 @@ module.exports = (sequelize, DataTypes) => {
       verifiedOn: {
         type: DataTypes.DATE,
       },
+      resetToken: {
+        type: DataTypes.STRING,
+      },
+      resetExpiration: {
+        type: DataTypes.DATE,
+      },
     },
     {
       freezeTableName: true,
     },
   );
 
-  User.addHook('beforeCreate', async (user, options) => {
-    const salt = await bcrypt.genSalt(parseFloat(process.env.SALT_ROUNDS || '12'));
-    user.password = await bcrypt.hash(user.password, salt);
-  });
+  const encryptPasswordIfChanged = async (user, options) => {
+    if (user.changed('password')) {
+      const salt = await bcrypt.genSalt(parseFloat(process.env.SALT_ROUNDS || '12'));
+      user.password = await bcrypt.hash(user.password, salt);
+    }
+  };
+
+  User.beforeCreate(encryptPasswordIfChanged);
+  User.beforeUpdate(encryptPasswordIfChanged);
 
   User.prototype.validatePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
