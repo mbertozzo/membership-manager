@@ -6,13 +6,13 @@
   "author": "Matteo Bertozzo",
   "license": "MIT",
   "engines": {
-    "node": "16.x"
+    "node": ">=16.x"
   },
   "scripts": {
     "build": "npx tsc --rootDir src/server --outDir dist/server",
     "dev": "ts-node-dev --respawn --pretty --transpile-only src/server/index.ts",
     "lint": "eslint src/server --ext ts",
-    "start": "node dist/server/index.js",
+    "start": "yarn build && node dist/server/index.js",
     "start:prod": "yarn build && cross-env NODE_ENV=production node dist/server/index.js"
   },
   "dependencies": {
