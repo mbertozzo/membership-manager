@@ -3,7 +3,7 @@ const log = logger();
 
 import crypto from 'crypto';
 
-import { AuthenticationError, ApolloError, UserInputError } from 'apollo-server-core';
+import { AuthenticationError, ApolloError, ForbiddenError, UserInputError } from 'apollo-server-core';
 
 import { Op } from 'sequelize';
 
@@ -135,11 +135,18 @@ const resolvers = {
       log.info(`Successfully changed password for user ${user.email}`);
       return 'Successfully changed password';
     },
-    createOrg: async (_, { name, description }, { db, res }, info) => {
+    createOrg: async (_, { name, description }, { db, user }, info) => {
+      if (!user) {
+        log.info('Call to createOrg by unauthenticated user');
+        throw new ForbiddenError('You need to be authenticated to perform this operation');
+      }
+
       const newOrg = await db.org.create({
         name,
         description,
       });
+
+      newOrg.addUser(user, { through: { userIsAdmin: true } });
 
       log.info(`Successfully created org ${newOrg.name}`);
 
