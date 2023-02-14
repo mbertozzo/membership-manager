@@ -1,5 +1,8 @@
 import { sign, verify } from 'jsonwebtoken';
 
+import logger from 'pino';
+const log = logger();
+
 export const generateToken = ({ id }) => {
   const oneHour = 60 * 2;
 
@@ -15,6 +18,7 @@ export const validateToken = token => {
     const r = verify(token, process.env.SIGNING_KEY);
     return r;
   } catch (error) {
+    log.error(`Error deconding JWT: ${error}`);
     return null;
   }
 };

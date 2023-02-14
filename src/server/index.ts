@@ -11,12 +11,15 @@ import {
 
 import * as dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import logger from 'pino';
 const log = logger();
 
 import apolloLoggerPlugin from './utils/apolloLoggerPlugin';
+
+import { validateToken } from './utils/jwt';
 
 import db from './models';
 import seed from './utils/seedDb';
@@ -58,6 +61,7 @@ app.use(
   }),
 );
 app.use(cors({ origin: '*' }));
+app.use(cookieParser());
 app.use(express.json());
 
 // Temp to make server work while FE is not yet available
@@ -83,7 +87,14 @@ async function startApolloServer(typeDefs, resolvers) {
     resolvers,
     csrfPrevention: true,
     cache: 'bounded',
-    context: ({ req, res }) => ({ db, req, res }),
+    context: async ({ req, res }) => {
+      const { jwt } = req.cookies;
+      const { sub } = validateToken(jwt) || {};
+
+      const user = sub ? await db.user.findOne({ where: { id: sub } }) : undefined;
+
+      return { db, req, res, user };
+    },
     formatError: ({ message, locations, path, extensions }) => ({ message, code: extensions.code }),
     plugins: [
       apolloLoggerPlugin,
