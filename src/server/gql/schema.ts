@@ -17,6 +17,7 @@ const typeDefs = gql`
     login(email: String!, password: String!): User!
     forgotPassword(email: String!): String
     changePassword(token: String!, password: String!): String
+    createOrg(name: String!, description: String): String
   }
 `;
 

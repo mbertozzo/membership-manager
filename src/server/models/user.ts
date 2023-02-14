@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const User = sequelize.define(
     'user',
     {
@@ -51,6 +51,8 @@ module.exports = (sequelize, DataTypes) => {
   User.prototype.validatePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
   };
+
+  User.associate = models => User.belongsToMany(models.org, { through: 'userorgs' });
 
   return User;
 };

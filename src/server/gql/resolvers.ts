@@ -135,6 +135,16 @@ const resolvers = {
       log.info(`Successfully changed password for user ${user.email}`);
       return 'Successfully changed password';
     },
+    createOrg: async (_, { name, description }, { db, res }, info) => {
+      const newOrg = await db.org.create({
+        name,
+        description,
+      });
+
+      log.info(`Successfully created org ${newOrg.name}`);
+
+      return `Successfully created org - ${newOrg.name} -`;
+    },
   },
 };
 
