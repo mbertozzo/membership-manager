@@ -99,7 +99,7 @@ const resolvers = {
 
         res.cookie('jwt', token, {
           httpOnly: true,
-          domain: 'localhost',
+          domain: process.env.DOMAIN,
         });
 
         return user;
