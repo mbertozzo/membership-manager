@@ -15,6 +15,20 @@ const resolvers = {
     name: (parent, { firstname, lastname }, context, info) => {
       return `My name is ${firstname} ${lastname}!`;
     },
+    listOrg: async (parent, _, { db, user }, info) => {
+      if (!user) {
+        log.info('Call to listOrg by unauthenticated user');
+        throw new ForbiddenError('You need to be authenticated to perform this operation');
+      }
+
+      const orgs = await user.getOrgs({
+        raw: true,
+        attributes: ['name', 'description', 'user_org.userIsAdmin'],
+        joinTableAttributes: [],
+      });
+
+      return orgs;
+    },
   },
 
   Mutation: {

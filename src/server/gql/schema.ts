@@ -7,8 +7,15 @@ const typeDefs = gql`
     email: String!
   }
 
+  type Org {
+    name: String!
+    description: String
+    userIsAdmin: String
+  }
+
   type Query {
     name(firstname: String!, lastname: String!): String
+    listOrg: [Org]
   }
 
   type Mutation {
