@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
     },
   );
 
-  Org.associate = models => Org.belongsToMany(models.user, { through: 'userorgs' });
+  Org.associate = models => Org.belongsToMany(models.user, { through: models.user_org });
 
   return Org;
 };

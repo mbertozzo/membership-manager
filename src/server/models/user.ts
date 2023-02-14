@@ -52,7 +52,7 @@ export default (sequelize, DataTypes) => {
     return await bcrypt.compare(password, this.password);
   };
 
-  User.associate = models => User.belongsToMany(models.org, { through: 'userorgs' });
+  User.associate = models => User.belongsToMany(models.org, { through: models.user_org });
 
   return User;
 };
