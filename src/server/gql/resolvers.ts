@@ -166,6 +166,36 @@ const resolvers = {
 
       return `Successfully created org - ${newOrg.name} -`;
     },
+    createMember: async (_, { name, surname, email, orgId }, { db, user }, info) => {
+      if (!user) {
+        log.info('Call to createMember by unauthenticated user');
+        throw new ForbiddenError('You need to be authenticated to perform this operation');
+      }
+
+      const orgs = await user.getOrgs({
+        raw: true,
+        attributes: ['id'],
+        joinTableAttributes: [],
+      });
+
+      const orgsId = orgs.map(o => o.id);
+
+      if (Array.isArray(orgsId) && orgsId.includes(parseInt(orgId, 10))) {
+        await db.member.create({
+          name,
+          surname,
+          email,
+          orgId,
+        });
+
+        log.info(`Successfully added member to org`);
+      } else {
+        log.info('Error while adding member, wrong orgId');
+        throw new UserInputError('Error: token expired or incorrect parameters');
+      }
+
+      return `Successfully added member`;
+    },
   },
 };
 

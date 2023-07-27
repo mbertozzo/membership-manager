@@ -25,6 +25,7 @@ const typeDefs = gql`
     forgotPassword(email: String!): String
     changePassword(token: String!, password: String!): String
     createOrg(name: String!, description: String): String
+    createMember(name: String!, surname: String!, email: String!, orgId: String!): String
   }
 `;
 
