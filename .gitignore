@@ -25,6 +25,8 @@ config.json
 
 .env
 
+ui
+
 # editors
 .idea
 .vscode
