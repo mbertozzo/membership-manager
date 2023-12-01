@@ -88,6 +88,8 @@ async function startDbConnection() {
  * Apollo Server configuration
  */
 async function startApolloServer(typeDefs, resolvers) {
+  log.info('NODE_ENV', process.env.NODE_ENV);
+
   const server = new ApolloServer({
     typeDefs,
     resolvers,
