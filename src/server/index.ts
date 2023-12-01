@@ -3,11 +3,15 @@
  */
 
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
 import {
-  ApolloServerPluginLandingPageDisabled,
-  ApolloServerPluginLandingPageGraphQLPlayground,
-} from 'apollo-server-core';
+  ApolloServerPluginLandingPageLocalDefault,
+  ApolloServerPluginLandingPageProductionDefault,
+} from '@apollo/server/plugin/landingPage/default';
+import { ApolloServerPluginLandingPageDisabled } from '@apollo/server/plugin/disabled';
+
+// import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 import * as dotenv from 'dotenv';
 import cors from 'cors';
@@ -47,16 +51,18 @@ const app = express();
 
 app.use(
   helmet({
+    crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: {
       directives:
-        process.env.NODE_ENV === 'production'
+        /*process.env.NODE_ENV === 'production'
           ? undefined
-          : {
-              'script-src': ["'self'", 'cdn.jsdelivr.net', "'unsafe-inline'"],
-              'style-src': ["'self'", 'cdn.jsdelivr.net', "'unsafe-inline'"],
-              'img-src': ["'self'", 'cdn.jsdelivr.net', "'unsafe-inline'"],
-              'style-src-elem': ["'self'", 'fonts.googleapis.com', 'cdn.jsdelivr.net', "'unsafe-inline'"],
-            },
+          : {*/
+        {
+          imgSrc: [`'self'`, 'data:', 'apollo-server-landing-page.cdn.apollographql.com'],
+          scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+          manifestSrc: [`'self'`, 'apollo-server-landing-page.cdn.apollographql.com'],
+          frameSrc: [`'self'`, 'sandbox.embed.apollographql.com'],
+        },
     },
   }),
 );
@@ -87,25 +93,27 @@ async function startApolloServer(typeDefs, resolvers) {
     resolvers,
     csrfPrevention: true,
     cache: 'bounded',
-    context: async ({ req, res }) => {
-      const { jwt } = req.cookies;
-      const { sub } = validateToken(jwt) || {};
-
-      const user = sub ? await db.user.findOne({ where: { id: sub } }) : undefined;
-
-      return { db, req, res, user };
-    },
-    formatError: ({ message, locations, path, extensions }) => ({ message, code: extensions.code }),
+    formatError: ({ message, locations, path, extensions }) => ({ message, code: extensions?.code }),
     plugins: [
       apolloLoggerPlugin,
-      process.env.NODE_ENV === 'production'
-        ? ApolloServerPluginLandingPageDisabled()
-        : ApolloServerPluginLandingPageGraphQLPlayground(),
+      // ...(process.env.NODE_ENV === 'production' ? [ApolloServerPluginLandingPageDisabled()] : []),
     ],
   });
-  await server.start().then(_ => log.info(`Successfully started Apollo Server on path ${server.graphqlPath}`));
+  await server.start().then(_ => log.info(`Successfully started Apollo Server on path /graphql`));
 
-  server.applyMiddleware({ app });
+  app.use(
+    '/graphql',
+    expressMiddleware(server, {
+      context: async ({ req, res }) => {
+        const { jwt } = req.cookies;
+        const { sub } = validateToken(jwt) || {};
+
+        const user = sub ? await db.user.findOne({ where: { id: sub } }) : undefined;
+
+        return { db, req, res, user };
+      },
+    }),
+  );
 }
 
 /**
@@ -115,6 +123,8 @@ async function startServer() {
   await startDbConnection();
 
   await startApolloServer(typeDefs, resolvers);
+
+  log.info(process.env.NODE_ENV);
 
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console

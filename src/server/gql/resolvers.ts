@@ -3,7 +3,7 @@ const log = logger();
 
 import crypto from 'crypto';
 
-import { AuthenticationError, ApolloError, ForbiddenError, UserInputError } from 'apollo-server-core';
+import { AuthenticationError, ForbiddenError, UserInputError } from '../utils/gqlErrors';
 
 import { Op } from 'sequelize';
 
